@@ -223,8 +223,17 @@ def process(opt):
         if opt.do_t2s:
             s2t_one_pair_res_para, t2s_one_pair_res_para, p_c, imp_c = \
                 process_one_pair(src_line, tgt_line, s2t_align, t2s_align, i, opt)
-            data.append({'paragraphs': [s2t_one_pair_res_para, ]})
-            data.append({'paragraphs': [t2s_one_pair_res_para, ]})
+
+            s2t_data = {'paragraphs': [s2t_one_pair_res_para, ]}
+            t2s_data = {'paragraphs': [t2s_one_pair_res_para, ]}
+            if opt.add_title:
+                s2t_data['title'] = f'{i}_s2t'
+                t2s_data['title'] = f'{i}_t2s'
+
+            # data.append({'paragraphs': [s2t_one_pair_res_para, ]})
+            # data.append({'paragraphs': [t2s_one_pair_res_para, ]})
+            data.append(s2t_data)
+            data.append(t2s_data)
         else:
             one_pair_res_para, p_c, imp_c = process_one_pair(src_line, tgt_line, s2t_align, t2s_align, i, opt)
             data.append({'paragraphs': [one_pair_res_para, ]})
@@ -287,6 +296,8 @@ def main():
     parser.add_argument('--alignment-start-from-one', action='store_true', default=False,
                         help='If the alignment file is presented in the format in which the first token is expressed '
                              'as 1 rather than 0, add this option.')
+    parser.add_argument('--add-title', action='store_true', default=False,
+                        help='Add "title" in json file to adapt huggingface\'s transformers module.')
 
     parser.add_argument('--null-dropout', type=float, default=0.0,
                         help='In order to adjust and get a proper null ratio, simply randomly ignore some null answer'
