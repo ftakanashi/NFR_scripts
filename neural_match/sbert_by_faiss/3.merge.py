@@ -43,9 +43,12 @@ def process(opt):
     for i, src_line in enumerate(src_lines):
         tgt_line = tgt_lines[i]
         match_info_line = merged_match_lines[i]
-        match_info = [(int(p.split()[0]), float(p.split()[1])) for p in
-                      match_info_line.split(opt.match_line_concat_symbol)]
-        match_info.sort(key=lambda x: x[1], reverse=True)
+        if match_info_line.strip() == '':
+            match_info = []
+        else:
+            match_info = [(int(p.split()[0]), float(p.split()[1])) for p in
+                          match_info_line.split(opt.match_line_concat_symbol)]
+            match_info.sort(key=lambda x: x[1], reverse=True)
 
         aug_query = []
         for match_i, match_v in match_info:
