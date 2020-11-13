@@ -91,12 +91,15 @@ def main():
     print('Calculating K-Best in TMS & TMT')
     total_emb = np.vstack((tms_emb, tmt_emb)) if tmt_emb is not None else tms_emb
     index.add(total_emb)
-    scores, indices = index.search(q_emb, args.kbest * 2)
+    scores, indices = index.search(q_emb, args.kbest * 2 if tmt_emb is not None else args.kbest)
 
     print('Collecting results...')
     q_num = q_emb.shape[0]
-    indices[indices>=q_num] -= q_num    # modify the tmt indices
+    tms_num = tms_emb.shape[0]
+    indices[indices>=tms_num] -= tms_num    # modify the tmt indices
     all_line_res = []
+
+    # extract fuzzy matches for every query
     for row_i in tqdm(range(q_num), mininterval=0.5, ncols=50):
         query_text = query_lines[row_i]
         score = scores[row_i, :]
