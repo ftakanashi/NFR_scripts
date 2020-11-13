@@ -6,6 +6,9 @@ NOTE = \
     Read a query matrix cached in the specified file.
     Calculate k-best similar vectors in TMS and TMT vectors according to inner product.
     Generate a match file recording the indices and similarity scores for every query vector.
+    NOTE.
+    Since the default search index is IndexFlatIP, any vectors input must be normalized ones in order to
+    take the inner product as the cosine similarity.
 '''
 
 import argparse
@@ -28,13 +31,14 @@ def parse_args():
                         help='Path to the embedding file where TMS is saved.')
     parser.add_argument('-tmst', '--tms_text',
                         help='Path to the TMS text file.')
-    parser.add_argument('-tmt',
-                        help='Path to the embedding file where TMT is saved.')
     parser.add_argument('-o', '--output',
                         help='Path to the output match file.')
 
+    parser.add_argument('-tmt', default=None,
+                        help='Path to the embedding file where TMT is saved. Default: None.'
+                             '\nIf set to None, only TMS will be searched.')
     parser.add_argument('-k', '--kbest', default=10, type=int,
-                        help='K best.')
+                        help='K best. Default: 10')
 
     parser.add_argument('-d', '--dimension', default=512, type=int,
                         help='Dimension of all saved vectors. Default: 512')
@@ -69,8 +73,11 @@ def main():
     print('Reading TMS embeddings...')
     tms_emb = np.fromfile(args.tms, dtype=args.dtype).reshape(-1, args.dimension)
 
-    print('Reading TMT embeddings...')
-    tmt_emb = np.fromfile(args.tmt, dtype=args.dtype).reshape(-1, args.dimension)
+    if args.tmt is not None:
+        print('Reading TMT embeddings...')
+        tmt_emb = np.fromfile(args.tmt, dtype=args.dtype).reshape(-1, args.dimension)
+    else:
+        tmt_emb = None
 
     print('Reading query embeddings...')
     q_emb = np.fromfile(args.query_emb, dtype=args.dtype).reshape(-1, args.dimension)
@@ -82,7 +89,7 @@ def main():
     index = faiss.index_cpu_to_all_gpus(index)
 
     print('Calculating K-Best in TMS & TMT')
-    total_emb = np.vstack((tms_emb, tmt_emb))
+    total_emb = np.vstack((tms_emb, tmt_emb)) if tmt_emb is not None else tms_emb
     index.add(total_emb)
     scores, indices = index.search(q_emb, args.kbest * 2)
 

@@ -40,6 +40,14 @@ def main():
     src_embedding = sbert.encode(src_lines, show_progress_bar=True, batch_size=args.batch_size)
     tgt_embedding = sbert.encode(tgt_lines, show_progress_bar=True, batch_size=args.batch_size)
 
+    if args.normalize_vectors:
+        print('Normalizing vectors...')
+        bs = src_embedding.shape[0]
+        src_norms = np.linalg.norm(src_embedding, axis=1)
+        tgt_norms = np.linalg.norm(tgt_embedding, axis=1)
+        src_embedding = src_embedding / src_norms.reshape(bs, 1)
+        tgt_embedding = tgt_embedding / tgt_norms.reshape(bs, 1)
+
     print('Writing embeddings to file...')
     np.hstack(src_embedding).flatten().tofile(args.src_output)
     np.hstack(tgt_embedding).flatten().tofile(args.tgt_output)
@@ -63,6 +71,8 @@ def parse_args():
                         help='Batch size during encoding. DEFAULT: 128')
     parser.add_argument('--remove-bpe-in-corpus', action='store_true',
                         help='If there are BPE marks in corpus, remove them before input the sentences into SBERT.')
+    parser.add_argument('--normalize-vectors', action='store_true',
+                        help='Set the flag to normalize the output vectors, fixing abs length of vectors to 1.')
 
     args = parser.parse_args()
     return args
